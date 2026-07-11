@@ -37,7 +37,7 @@ if (!args.b?.length) {
     );
     process.exit(0);
 }
-const backendsToWorkOn = args.b.includes('all')
+const backends_to_work = args.b.includes('all')
     ? BACKENDS
     : BACKENDS.filter(b => {
           return args.b!.includes(b);
@@ -48,7 +48,7 @@ const body = JSON.stringify({
     org: 'SomeCorp'
 });
 
-const runAutocannon = () => {
+const run_autocannon = () => {
     return autocannon({
         url: `http://127.0.0.1:${PORT}/hello`,
         connections: CONNECTIONS,
@@ -62,19 +62,19 @@ const runAutocannon = () => {
     });
 };
 
-const runAutocannonBench = async (server: ChildProcessWithoutNullStreams, backend: string) => {
+const run_autocannon_bench = async (server: ChildProcessWithoutNullStreams, backend: string) => {
     try {
         console.log(`\n=== ${backend} ===`);
         if (WARMUP_RUNS) {
             console.log(`Running ${WARMUP_RUNS} warmup rounds`);
         }
         for (let i = 0; i < WARMUP_RUNS; i++) {
-            await runAutocannon();
+            await run_autocannon();
             console.log(`Finished warmup round ${i + 1}`);
         }
 
         // Real run
-        const result = await runAutocannon();
+        const result = await run_autocannon();
         console.log(autocannon.printResult(result));
     } catch (error) {
         console.log('Error during autocannon testing');
@@ -85,7 +85,7 @@ const runAutocannonBench = async (server: ChildProcessWithoutNullStreams, backen
     }
 };
 
-const waitForListening = (server: ChildProcessWithoutNullStreams) => {
+const wait_for_listening = (server: ChildProcessWithoutNullStreams) => {
     return new Promise<void>((resolve, reject) => {
         server.stdout.on('data', (m: string) => {
             // @NOTE: simple way to wait for nest or other backend to start ie check for console.log messages
@@ -100,7 +100,7 @@ const waitForListening = (server: ChildProcessWithoutNullStreams) => {
     });
 };
 
-for (const backend of backendsToWorkOn) {
+for (const backend of backends_to_work) {
     const server = spawn(
         'node',
         [
@@ -117,8 +117,8 @@ for (const backend of backendsToWorkOn) {
     server.stdout.setEncoding('utf8');
 
     try {
-        await waitForListening(server);
-        await runAutocannonBench(server, backend);
+        await wait_for_listening(server);
+        await run_autocannon_bench(server, backend);
     } catch (error) {
         console.log(`Failed to start ${backend}`);
         console.log(error);

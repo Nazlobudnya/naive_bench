@@ -1,4 +1,9 @@
-import { execFileSync, spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import {
+    execFileSync,
+    spawn,
+    execSync,
+    type ChildProcessWithoutNullStreams
+} from 'node:child_process';
 import { once } from 'node:events';
 import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -14,25 +19,46 @@ const BACKENDS = [
     'express',
     'fastify',
     'nest-express',
-    'nest-fastify',
+    'nest-fastify'
 ];
+
+function executableExists(name: string) {
+    try {
+        const cmd = process.platform === 'win32' ? `where ${name}` : `which ${name}`;
+        execSync(cmd, {
+            stdio: 'ignore'
+        });
+        return true;
+    } catch (err) {
+        return false;
+    }
+}
+
+const is_ab_present = executableExists('ab');
+
+if (is_ab_present) {
+    console.log(
+        '[ab] executable missing. Either install [ab] onto your system or use `pnpm bench:autocannon` which should be installed in dev deps'
+    );
+    process.exit(0);
+}
 
 const bodyFile = join(tmpdir(), 'bench-body.json');
 writeFileSync(
     bodyFile,
     JSON.stringify({
         name: 'SomeName',
-        org: 'SomeCorp',
-    }),
+        org: 'SomeCorp'
+    })
 );
 
 const p_args = parseArgs({
     options: {
         b: {
             type: 'string',
-            multiple: true,
-        },
-    },
+            multiple: true
+        }
+    }
 });
 
 const args = p_args.values;
@@ -42,17 +68,17 @@ if (!args.b?.length) {
         `
 Use [-b] option to pass which backends to test. Options:
 all - Test all backends
-${BACKENDS.join('\n')}`,
+${BACKENDS.join('\n')}`
     );
     process.exit(0);
 }
-const backendsToWorkOn = args.b.includes('all')
+const backends_to_work = args.b.includes('all')
     ? BACKENDS
     : BACKENDS.filter(b => {
           return args.b!.includes(b);
       });
 
-const runAbBench = async (server: ChildProcessWithoutNullStreams, backend: string) => {
+const run_ab_bench = async (server: ChildProcessWithoutNullStreams, backend: string) => {
     try {
         console.log(`\n=== ${backend} ===`);
         if (WARMUP_RUNS) {
@@ -73,11 +99,11 @@ const runAbBench = async (server: ChildProcessWithoutNullStreams, backend: strin
                     'application/json',
                     '-H',
                     'Authorization: Bearer custom_token',
-                    `http://127.0.0.1:${PORT}/hello`,
+                    `http://127.0.0.1:${PORT}/hello`
                 ],
                 {
-                    stdio: 'ignore',
-                },
+                    stdio: 'ignore'
+                }
             );
             console.log(`Finished warmup round ${i + 1}`);
         }
@@ -97,11 +123,11 @@ const runAbBench = async (server: ChildProcessWithoutNullStreams, backend: strin
                 'application/json',
                 '-H',
                 'Authorization: Bearer custom_token',
-                `http://127.0.0.1:${PORT}/hello`,
+                `http://127.0.0.1:${PORT}/hello`
             ],
             {
-                stdio: 'inherit',
-            },
+                stdio: 'inherit'
+            }
         );
     } catch (error) {
         console.log('Error during ab testing');
@@ -112,7 +138,7 @@ const runAbBench = async (server: ChildProcessWithoutNullStreams, backend: strin
     }
 };
 
-const waitForListening = (server: ChildProcessWithoutNullStreams) => {
+const wait_for_listening = (server: ChildProcessWithoutNullStreams) => {
     return new Promise<void>((resolve, reject) => {
         server.stdout.on('data', (m: string) => {
             if (m.includes('listening on port') || m.includes('successfully started')) {
@@ -126,25 +152,25 @@ const waitForListening = (server: ChildProcessWithoutNullStreams) => {
     });
 };
 
-for (const backend of backendsToWorkOn) {
+for (const backend of backends_to_work) {
     const server = spawn(
         'node',
         [
-            join(import.meta.dirname, 'packages', backend, 'dist', 'main.js'),
+            join(import.meta.dirname, 'packages', backend, 'dist', 'main.js')
         ],
         {
             env: {
                 ...process.env,
-                PORT: String(PORT),
+                PORT: String(PORT)
             },
-            stdio: 'pipe',
-        },
+            stdio: 'pipe'
+        }
     );
     server.stdout.setEncoding('utf8');
 
     try {
-        await waitForListening(server);
-        await runAbBench(server, backend);
+        await wait_for_listening(server);
+        await run_ab_bench(server, backend);
     } catch (error) {
         console.log(`Failed to start ${backend}`);
         console.log(error);
