@@ -1,0 +1,21 @@
+{
+  "name": "bench-web-servers",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bench:ab": "node --experimental-strip-types --experimental-transform-types --disable-warning=ExperimentalWarning ab_bench.ts",
+    "bench:autocannon": "node --experimental-strip-types --experimental-transform-types --disable-warning=ExperimentalWarning autocannon_bench.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.6.5",
+  "devDependencies": {
+    "@types/autocannon": "^7.12.7",
+    "@types/node": "^24.0.0",
+    "autocannon": "^8.0.0",
+    "typescript": "7.0.1-rc"
+  }
+}
