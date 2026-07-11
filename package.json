@@ -8,6 +8,9 @@
     "bench:ab": "node --experimental-strip-types --experimental-transform-types --disable-warning=ExperimentalWarning ab_bench.ts",
     "bench:autocannon": "node --experimental-strip-types --experimental-transform-types --disable-warning=ExperimentalWarning autocannon_bench.ts"
   },
+    "engines": {
+        "node": ">=22.7.0"
+    },  
   "keywords": [],
   "author": "",
   "license": "ISC",

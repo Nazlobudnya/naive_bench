@@ -6,6 +6,9 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main.js"
   },
+  "engines": {
+    "node": ">=22.7.0"
+  },  
   "dependencies": {
     "fastify": "^5.0.0",
     "zod": "^4.0.0"
