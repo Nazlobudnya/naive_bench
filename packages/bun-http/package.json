@@ -1,0 +1,14 @@
+{
+  "name": "@bench/bun-http",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "bun src/main.ts"
+  },
+  "dependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0"
+  }
+}

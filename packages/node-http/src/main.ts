@@ -3,14 +3,14 @@ import { z } from 'zod';
 
 const helloBodySchema = z.object({
     name: z.string(),
-    org: z.string(),
+    org: z.string()
 });
 
 function sendJson(res: ServerResponse, statusCode: number, payload: unknown): void {
     const response = JSON.stringify(payload);
     res.writeHead(statusCode, {
         'content-type': 'application/json; charset=utf-8',
-        'content-length': response.length,
+        'content-length': response.length
     });
     res.end(response);
 }
@@ -18,14 +18,14 @@ function sendJson(res: ServerResponse, statusCode: number, payload: unknown): vo
 const server = createServer((req, res) => {
     if (req.method !== 'POST' || req.url !== '/hello') {
         sendJson(res, 404, {
-            message: 'Not Found',
+            message: 'Not Found'
         });
         return;
     }
 
     if (req.headers.authorization !== 'Bearer custom_token') {
         sendJson(res, 401, {
-            message: 'Unauthorized',
+            message: 'Unauthorized'
         });
         return;
     }
@@ -37,7 +37,7 @@ const server = createServer((req, res) => {
         raw += chunk;
     };
 
-    const onEnd = () => {
+    const onEnd = async () => {
         cleanup();
 
         let body: unknown;
@@ -45,7 +45,7 @@ const server = createServer((req, res) => {
             body = JSON.parse(raw);
         } catch {
             sendJson(res, 400, {
-                message: 'Invalid JSON',
+                message: 'Invalid JSON'
             });
             return;
         }
@@ -54,7 +54,7 @@ const server = createServer((req, res) => {
         if (!result.success) {
             sendJson(res, 400, {
                 message: 'Validation failed',
-                errors: result.error.issues,
+                errors: result.error.issues
             });
             return;
         }
@@ -62,7 +62,7 @@ const server = createServer((req, res) => {
         const response = `Hi ${result.data.name} from ${result.data.org}`;
         res.writeHead(200, {
             'content-type': 'text/plain; charset=utf-8',
-            'content-length': response.length,
+            'content-length': response.length
         });
         res.end(response);
     };

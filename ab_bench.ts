@@ -10,12 +10,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 
-const WARMUP_RUNS = 0;
+const WARMUP_RUNS = 3;
 const PORT = 3000;
 const CONNECTIONS = 100;
 const REQUESTS = 10_000;
 const BACKENDS = [
     'node-http',
+    'bun-http',
+    'uws-http',
     'express',
     'fastify',
     'nest-express',
@@ -36,7 +38,7 @@ function executableExists(name: string) {
 
 const is_ab_present = executableExists('ab');
 
-if (is_ab_present) {
+if (!is_ab_present) {
     console.log(
         '[ab] executable missing. Either install [ab] onto your system or use `pnpm bench:autocannon` which should be installed in dev deps'
     );
@@ -153,10 +155,14 @@ const wait_for_listening = (server: ChildProcessWithoutNullStreams) => {
 };
 
 for (const backend of backends_to_work) {
+    // bun runs TS directly, no build step
+    const is_bun = backend === 'bun-http';
     const server = spawn(
-        'node',
+        is_bun ? 'bun' : 'node',
         [
-            join(import.meta.dirname, 'packages', backend, 'dist', 'main.js')
+            is_bun
+                ? join(import.meta.dirname, 'packages', backend, 'src', 'main.ts')
+                : join(import.meta.dirname, 'packages', backend, 'dist', 'main.js')
         ],
         {
             env: {
