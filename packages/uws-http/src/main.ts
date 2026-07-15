@@ -1,6 +1,7 @@
 import { App, type HttpResponse } from 'uWebSockets.js';
-import { z } from 'zod';
+import { unknown, z } from 'zod';
 
+const MAX_REQ_PAYLOAD_SIZE_BYTES = 1024 * 1; // 1Kb
 const helloBodySchema = z.object({
     name: z.string(),
     org: z.string()
@@ -63,32 +64,17 @@ App()
             });
         };
 
-        // Chunk memory is owned by uWS and invalid after each onData
-        // callback returns, so non-last chunks must be copied
-        let pending: Buffer | null = null;
-        res.onData((chunk, isLast) => {
-            if (!isLast) {
-                pending = pending
-                    ? Buffer.concat([
-                          pending,
-                          Buffer.from(chunk)
-                      ])
-                    : Buffer.concat([
-                          Buffer.from(chunk)
-                      ]);
+        res.collectBody(MAX_REQ_PAYLOAD_SIZE_BYTES, raw_body => {
+            if (raw_body === null) {
+                sendJson(res, '413 Payload size exceeded', {
+                    message: 'Payload size exceeded'
+                });
                 return;
             }
 
-            const raw = pending
-                ? Buffer.concat([
-                      pending,
-                      Buffer.from(chunk)
-                  ]).toString('utf8')
-                : Buffer.from(chunk).toString('utf8');
-
-            let body: unknown;
+            let body = unknown;
             try {
-                body = JSON.parse(raw);
+                body = JSON.parse(Buffer.from(raw_body).toString('utf-8'));
             } catch {
                 sendJson(res, '400 Bad Request', {
                     message: 'Invalid JSON'
